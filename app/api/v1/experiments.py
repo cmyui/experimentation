@@ -9,6 +9,7 @@ from app.api.v1.responses import Success
 from app.context import HTTPAPIRequestContext
 from app.errors import ServiceError
 from app.models import BaseModel
+from app.models.experiment_exposures import ExperimentExposure
 from app.models.experiments import Experiment
 from app.models.experiments import ExperimentType
 from app.usecases import experiments
@@ -55,8 +56,8 @@ async def create_experiment(
 @router.get("/v1/experiments")
 async def fetch_many_experiments(
     user_id: str,
-    page: int = 1,
-    page_size: int = 50,
+    page: int,
+    page_size: int,
     ctx: HTTPAPIRequestContext = Depends(),
 ) -> Success[list[Experiment]]:
     data = await experiments.fetch_many_qualified(ctx, user_id, page, page_size)
@@ -76,7 +77,7 @@ async def track_exposure(
     user_id: str,  # TODO: should we determine this from a cookie/header?
     variant_name: str,
     ctx: HTTPAPIRequestContext = Depends(),
-) -> Success[None]:
+) -> Success[ExperimentExposure]:
     data = await experiments.track_exposure(ctx, experiment_id, user_id, variant_name)
     if isinstance(data, ServiceError):
         return responses.failure(
