@@ -55,6 +55,8 @@ async def track_exposure(
             user_id=user_id,
             variant_name=variant_name,
         )
+    except asyncpg.exceptions.UniqueViolationError as exc:
+        return ServiceError.EXPERIMENT_EXPOSURE_ALREADY_EXISTS
     except Exception as exc:
         logging.error(
             "An unhandled error occurred while tracking exposure",

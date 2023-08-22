@@ -23,6 +23,8 @@ def determine_status_code(error: ServiceError) -> int:
         return status.HTTP_500_INTERNAL_SERVER_ERROR
     elif error == ServiceError.EXPERIMENT_KEY_ALREADY_EXISTS:
         return status.HTTP_409_CONFLICT
+    elif error == ServiceError.EXPERIMENT_EXPOSURE_ALREADY_EXISTS:
+        return status.HTTP_409_CONFLICT
     else:
         return status.HTTP_500_INTERNAL_SERVER_ERROR
 
