@@ -11,11 +11,6 @@ handlers:
     level: INFO
     formatter: plaintext
     stream: ext://sys.stdout
-  file:
-    class: logging.FileHandler
-    level: INFO
-    formatter: json
-    filename: logs.log
 formatters:
   plaintext:
     format: '%(asctime)s %(name)s %(levelname)s %(message)s'
@@ -24,4 +19,4 @@ formatters:
     format: '%(asctime)s %(name)s %(levelname)s %(message)s'
 root:
   level: INFO
-  handlers: [console, file]
+  handlers: [console]
