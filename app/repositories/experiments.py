@@ -13,7 +13,7 @@ from app.models.experiments import Hypothesis
 
 READ_PARAMS = """\
     experiment_id, name, key, type, description, hypothesis, exposure_event,
-    variants, user_segments, bucketing_salt, created_at, updated_at
+    variants, variant_allocation, bucketing_salt, created_at, updated_at
 """
 
 
@@ -29,9 +29,7 @@ def serialize(experiment: Experiment) -> dict[str, Any]:
         "variants": json.dumps(
             [v.model_dump(mode="json") for v in experiment.variants]
         ),
-        "user_segments": json.dumps(
-            [s.model_dump(mode="json") for s in experiment.user_segments]
-        ),
+        "variant_allocation": json.dumps(experiment.variant_allocation),
         "bucketing_salt": experiment.bucketing_salt,
         "created_at": experiment.created_at,
         "updated_at": experiment.updated_at,
@@ -49,7 +47,7 @@ def deserialize(data: Record) -> Experiment:
             "hypothesis": json.loads(data["hypothesis"]),
             "exposure_event": data["exposure_event"],
             "variants": json.loads(data["variants"]),
-            "user_segments": json.loads(data["user_segments"]),
+            "variant_allocation": json.loads(data["variant_allocation"]),
             "bucketing_salt": data["bucketing_salt"],
             "created_at": data["created_at"],
             "updated_at": data["updated_at"],
@@ -72,7 +70,7 @@ async def create(
         hypothesis=Hypothesis(metric_effects=[]),
         exposure_event=None,
         variants=[],
-        user_segments=[],
+        variant_allocation={},
         bucketing_salt=secrets.token_hex(4),
         created_at=datetime.now(),
         updated_at=datetime.now(),
@@ -81,11 +79,11 @@ async def create(
         query=f"""\
         INSERT INTO experiments (experiment_id, name, key, type, description,
                                  hypothesis, exposure_event, variants,
-                                 user_segments, bucketing_salt,
+                                 variant_allocation, bucketing_salt,
                                  created_at, updated_at)
              VALUES (:experiment_id, :name, :key, :type, :description,
                      :hypothesis, :exposure_event, :variants,
-                     :user_segments, :bucketing_salt,
+                     :variant_allocation, :bucketing_salt,
                      :created_at, :updated_at)
           RETURNING {READ_PARAMS}
         """,
@@ -93,3 +91,24 @@ async def create(
     )
     assert rec is not None
     return Experiment.model_validate(deserialize(rec))
+
+
+async def fetch_many(
+    ctx: AbstractContext,
+    page: int,
+    page_size: int,
+) -> list[Experiment]:
+    recs = await ctx.database.fetch_all(
+        query=f"""\
+        SELECT {READ_PARAMS}
+          FROM experiments
+         ORDER BY rec_id DESC
+         LIMIT :limit
+        OFFSET :offset
+        """,
+        values={
+            "limit": page_size,
+            "offset": (page - 1) * page_size,
+        },
+    )
+    return [deserialize(rec) for rec in recs]

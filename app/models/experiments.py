@@ -69,13 +69,12 @@ class Hypothesis(BaseModel):
 class Variant(BaseModel):
     name: str
     description: str
-    allocation: float  # %
     payload: Any | None = None
 
 
-class Segment(BaseModel):
-    name: str
-    filters: list[PropertyFilter]
+# class Segment(BaseModel):
+#     name: str
+#     filters: list[PropertyFilter]
 
 
 class Experiment(BaseModel):
@@ -87,7 +86,8 @@ class Experiment(BaseModel):
     hypothesis: Hypothesis
     exposure_event: str | None
     variants: list[Variant]
-    user_segments: list[Segment]
+    variant_allocation: dict[str, float]  # %
+    # user_segments: list[Segment]
     bucketing_salt: str
     created_at: datetime
     updated_at: datetime

@@ -8,7 +8,8 @@ CREATE TABLE experiments (
     hypothesis JSONB NOT NULL,
     exposure_event TEXT NULL,
     variants JSONB NOT NULL,
-    user_segments JSONB NOT NULL,
+    variant_allocation JSONB NOT NULL,
+    -- user_segments JSONB NOT NULL,
     bucketing_salt TEXT NOT NULL,
     -- TODO: add support for these to the application
     -- sticky_bucketing BOOLEAN NOT NULL,
