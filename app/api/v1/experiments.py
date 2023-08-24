@@ -9,9 +9,9 @@ from app.api.v1.responses import Success
 from app.context import HTTPAPIRequestContext
 from app.errors import ServiceError
 from app.models import BaseModel
-from app.models.experiment_exposures import ExperimentExposure
 from app.models.experiments import Experiment
 from app.models.experiments import ExperimentType
+from app.models.exposures import Exposure
 from app.usecases import experiments
 
 router = APIRouter()
@@ -23,7 +23,7 @@ def determine_status_code(error: ServiceError) -> int:
         return status.HTTP_500_INTERNAL_SERVER_ERROR
     elif error == ServiceError.EXPERIMENT_KEY_ALREADY_EXISTS:
         return status.HTTP_409_CONFLICT
-    elif error == ServiceError.EXPERIMENT_EXPOSURE_ALREADY_EXISTS:
+    elif error == ServiceError.EXPOSURE_ALREADY_EXISTS:
         return status.HTTP_409_CONFLICT
     else:
         return status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -79,7 +79,7 @@ async def track_exposure(
     user_id: str,  # TODO: should we determine this from a cookie/header?
     variant_name: str,
     ctx: HTTPAPIRequestContext = Depends(),
-) -> Success[ExperimentExposure]:
+) -> Success[Exposure]:
     data = await experiments.track_exposure(ctx, experiment_id, user_id, variant_name)
     if isinstance(data, ServiceError):
         return responses.failure(

@@ -5,11 +5,11 @@ import asyncpg.exceptions
 
 from app.context import AbstractContext
 from app.errors import ServiceError
-from app.models.experiment_exposures import ExperimentExposure
 from app.models.experiments import Experiment
 from app.models.experiments import ExperimentType
-from app.repositories import experiment_exposures
+from app.models.exposures import Exposure
 from app.repositories import experiments
+from app.repositories import exposures
 
 
 async def create(
@@ -47,16 +47,16 @@ async def track_exposure(
     experiment_id: UUID,
     user_id: str,
     variant_name: str,
-) -> ExperimentExposure | ServiceError:
+) -> Exposure | ServiceError:
     try:
-        experiment_exposure = await experiment_exposures.create(
+        exposure = await exposures.create(
             ctx,
             experiment_id=experiment_id,
             user_id=user_id,
             variant_name=variant_name,
         )
     except asyncpg.exceptions.UniqueViolationError as exc:
-        return ServiceError.EXPERIMENT_EXPOSURE_ALREADY_EXISTS
+        return ServiceError.EXPOSURE_ALREADY_EXISTS
     except Exception as exc:
         logging.error(
             "An unhandled error occurred while tracking exposure",
@@ -69,7 +69,7 @@ async def track_exposure(
         )
         return ServiceError.FAILED_TO_TRACK_EXPOSURE
 
-    return experiment_exposure
+    return exposure
 
 
 async def fetch_many_qualified(

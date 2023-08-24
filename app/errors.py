@@ -7,4 +7,4 @@ class ServiceError(Enum):
     EXPERIMENT_KEY_ALREADY_EXISTS = "experiment_key_already_exists"
     FAILED_TO_FETCH_EXPERIMENTS = "failed_to_fetch_experiments"
 
-    EXPERIMENT_EXPOSURE_ALREADY_EXISTS = "experiment_exposure_already_exists"
+    EXPOSURE_ALREADY_EXISTS = "exposure_already_exists"

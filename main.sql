@@ -23,14 +23,14 @@ CREATE UNIQUE INDEX experiments_experiment_id_idx ON experiments (experiment_id)
 CREATE UNIQUE INDEX experiments_key_idx ON experiments (key);
 CREATE INDEX experiments_exposure_event_idx ON experiments (exposure_event);
 
-CREATE TABLE experiment_exposures (
+CREATE TABLE exposures (
     rec_id SERIAL PRIMARY KEY,
     experiment_id TEXT NOT NULL,
     user_id TEXT NOT NULL,
     variant TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-CREATE UNIQUE INDEX experiment_exposures_experiment_id_user_id_idx ON experiment_exposures (experiment_id, user_id);
-CREATE INDEX experiment_exposures_experiment_id_idx ON experiment_exposures (experiment_id);
-CREATE INDEX experiment_exposures_user_id_idx ON experiment_exposures (user_id);
-CREATE INDEX experiment_exposures_variant_idx ON experiment_exposures (variant);
+CREATE UNIQUE INDEX exposures_experiment_id_user_id_idx ON exposures (experiment_id, user_id);
+CREATE INDEX exposures_experiment_id_idx ON exposures (experiment_id);
+CREATE INDEX exposures_user_id_idx ON exposures (user_id);
+CREATE INDEX exposures_variant_idx ON exposures (variant);

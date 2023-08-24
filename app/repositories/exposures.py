@@ -5,7 +5,7 @@ from uuid import UUID
 from databases.interfaces import Record
 
 from app.context import AbstractContext
-from app.models.experiment_exposures import ExperimentExposure
+from app.models.exposures import Exposure
 
 
 READ_PARAMS = """\
@@ -13,7 +13,7 @@ READ_PARAMS = """\
 """
 
 
-def serialize(experiment: ExperimentExposure) -> dict[str, Any]:
+def serialize(experiment: Exposure) -> dict[str, Any]:
     return {
         "experiment_id": str(experiment.experiment_id),
         "user_id": experiment.user_id,
@@ -22,8 +22,8 @@ def serialize(experiment: ExperimentExposure) -> dict[str, Any]:
     }
 
 
-def deserialize(data: Record) -> ExperimentExposure:
-    return ExperimentExposure.model_validate(
+def deserialize(data: Record) -> Exposure:
+    return Exposure.model_validate(
         {
             "experiment_id": data["experiment_id"],
             "user_id": data["user_id"],
@@ -38,8 +38,8 @@ async def create(
     experiment_id: UUID,
     user_id: str,
     variant_name: str,
-) -> ExperimentExposure:
-    experiment_exposure = ExperimentExposure(
+) -> Exposure:
+    exposure = Exposure(
         experiment_id=experiment_id,
         user_id=user_id,
         variant_name=variant_name,
@@ -47,12 +47,12 @@ async def create(
     )
     rec = await ctx.database.fetch_one(
         f"""\
-        INSERT INTO experiment_exposures (experiment_id, user_id, variant_name,
-                                          created_at)
+        INSERT INTO exposures (experiment_id, user_id, variant_name,
+                               created_at)
              VALUES (:experiment_id, :user_id, :variant_name, :created_at)
           RETURNING {READ_PARAMS}
         """,
-        values=serialize(experiment_exposure),
+        values=serialize(exposure),
     )
     assert rec is not None
-    return ExperimentExposure.model_validate(deserialize(rec))
+    return Exposure.model_validate(deserialize(rec))
