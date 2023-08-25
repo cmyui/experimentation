@@ -22,11 +22,11 @@ def success(
     content: Any,
     status: int = status.HTTP_200_OK,
     headers: dict[str, str] | None = None,
-    metadata: dict[str, Any] | None = None,
+    meta: dict[str, Any] | None = None,
 ) -> Any:
-    if metadata is None:
-        metadata = {}
-    data = {"status": "success", "data": content, "metadata": metadata}
+    if meta is None:
+        meta = {}
+    data = {"status": "success", "data": content, "meta": meta}
     return JSONResponse(data, status, headers)
 
 

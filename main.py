@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from databases import Database
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app import exception_handling
 from app import logging
@@ -12,6 +13,16 @@ logging.configure_logging()
 exception_handling.hook_exception_handlers()
 
 app = FastAPI()
+
+origins = ["http://localhost:3000"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.on_event("startup")

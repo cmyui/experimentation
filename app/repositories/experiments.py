@@ -133,20 +133,41 @@ async def fetch_many(
             """
         values["status"] = status.value
 
-    if page is not None and page_size is not None:
-        query += """\
-            LIMIT :page_size
-           OFFSET :offset
-        """
-        values["page_size"] = page_size
-        values["offset"] = page * page_size
-
     query += """\
         ORDER BY rec_id DESC
     """
 
+    if page is not None and page_size is not None:
+        query += """\
+            LIMIT :limit
+           OFFSET :offset
+        """
+        values["limit"] = page_size
+        values["offset"] = (page - 1) * page_size
+
     recs = await ctx.database.fetch_all(query, values)
     return [deserialize(rec) for rec in recs]
+
+
+async def fetch_total_count(
+    ctx: AbstractContext,
+    status: ExperimentStatus | None = None,
+) -> int:
+    query = """\
+        SELECT COUNT(*)
+          FROM experiments
+    """
+    values = {}
+
+    if status is not None:
+        query += """\
+            WHERE status = :status
+            """
+        values["status"] = status.value
+
+    rec = await ctx.database.fetch_one(query, values)
+    assert rec is not None
+    return rec[0]
 
 
 async def partial_update(

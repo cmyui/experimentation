@@ -4,6 +4,7 @@ from app.models.experiments import Experiment
 
 
 def normalize_value(value: str) -> float:
+    # TODO: test flame improvements
     return int(hashlib.md5(value.encode("utf-8")).hexdigest(), 16) / 2**128
 
 

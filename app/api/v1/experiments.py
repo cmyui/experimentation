@@ -94,6 +94,49 @@ async def create_experiment(
 
 
 @router.get("/v1/experiments")
+async def fetch_many_experiments(
+    page: int = 1,
+    page_size: int = 50,
+    ctx: HTTPAPIRequestContext = Depends(),
+) -> Success[list[Experiment]]:
+    data = await experiments.fetch_many_experiments(ctx, page, page_size)
+    if isinstance(data, ServiceError):
+        return responses.failure(
+            error=data,
+            message="Failed to fetch resources",
+            status=determine_status_code(data),
+        )
+
+    count = await experiments.fetch_total_experiments_count(ctx)
+    if isinstance(count, ServiceError):
+        return responses.failure(
+            error=count,
+            message="Failed to fetch resources",
+            status=determine_status_code(count),
+        )
+
+    return responses.success(
+        content=[d.model_dump(mode="json") for d in data],
+        meta={"page": page, "page_size": page_size, "total": count},
+    )
+
+
+@router.get("/v1/experiments/{experiment_id}")
+async def fetch_one_experiment(
+    experiment_id: UUID,
+    ctx: HTTPAPIRequestContext = Depends(),
+) -> Success[Experiment]:
+    data = await experiments.fetch_one_experiment(ctx, experiment_id)
+    if isinstance(data, ServiceError):
+        return responses.failure(
+            error=data,
+            message="Failed to fetch resource",
+            status=determine_status_code(data),
+        )
+    return responses.success(data.model_dump(mode="json"))
+
+
+@router.get("/v1/eligible_experiments")
 async def fetch_and_assign_eligible_experiments(
     user_id: str,
     ctx: HTTPAPIRequestContext = Depends(),

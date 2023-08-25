@@ -153,6 +153,63 @@ async def partial_update(
     return experiment
 
 
+async def fetch_one_experiment(
+    ctx: AbstractContext,
+    experiment_id: UUID,
+) -> Experiment | ServiceError:
+    try:
+        experiment = await experiments.fetch_one(ctx, experiment_id)
+    except Exception as exc:
+        logging.error(
+            "An unhandled error occurred while fetching an experiment",
+            exc_info=exc,
+            extra={"experiment_id": experiment_id},
+        )
+        return ServiceError.EXPERIMENTS_FETCH_FAILED
+
+    if experiment is None:
+        return ServiceError.EXPERIMENTS_NOT_FOUND
+
+    return experiment
+
+
+async def fetch_many_experiments(
+    ctx: AbstractContext,
+    page: int,
+    page_size: int,
+) -> list[Experiment] | ServiceError:
+    try:
+        _experiments = await experiments.fetch_many(
+            ctx,
+            page=page,
+            page_size=page_size,
+        )
+    except Exception as exc:
+        logging.error(
+            "An unhandled error occurred while fetching experiments",
+            exc_info=exc,
+            extra={"page": page, "page_size": page_size},
+        )
+        return ServiceError.EXPERIMENTS_FETCH_FAILED
+
+    return _experiments
+
+
+async def fetch_total_experiments_count(
+    ctx: AbstractContext,
+) -> int | ServiceError:
+    try:
+        total = await experiments.fetch_total_count(ctx)
+    except Exception as exc:
+        logging.error(
+            "An unhandled error occurred while fetching total experiments",
+            exc_info=exc,
+        )
+        return ServiceError.EXPERIMENTS_FETCH_FAILED
+
+    return total
+
+
 async def fetch_and_assign_eligible_experiments(
     ctx: AbstractContext,
     user_id: str,

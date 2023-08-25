@@ -49,7 +49,8 @@ async def create(
         f"""\
         INSERT INTO exposures (experiment_id, user_id, variant_name,
                                created_at)
-             VALUES (:experiment_id, :user_id, :variant_name, :created_at)
+             VALUES (:experiment_id, :user_id, :variant_name,
+                     :created_at)
           RETURNING {READ_PARAMS}
         """,
         values=serialize(exposure),
