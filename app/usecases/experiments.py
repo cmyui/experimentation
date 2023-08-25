@@ -4,6 +4,7 @@ from uuid import UUID
 import asyncpg.exceptions
 
 from app import distribution
+from app._typing import is_set
 from app._typing import UNSET
 from app._typing import Unset
 from app.context import AbstractContext
@@ -34,7 +35,7 @@ async def create(
             experiment_key=experiment_key,
         )
     except asyncpg.exceptions.UniqueViolationError as exc:
-        return ServiceError.EXPERIMENT_KEY_ALREADY_EXISTS
+        return ServiceError.EXPERIMENTS_KEY_ALREADY_EXISTS
     except Exception as exc:
         logging.error(
             "An unhandled error occurred while creating an experiment",
@@ -45,7 +46,7 @@ async def create(
                 "experiment_key": experiment_key,
             },
         )
-        return ServiceError.FAILED_TO_CREATE_EXPERIMENT
+        return ServiceError.EXPERIMENTS_CREATE_FAILED
 
     return experiment
 
@@ -64,6 +65,50 @@ async def partial_update(
     bucketing_salt: str | Unset = UNSET,
     status: ExperimentStatus | Unset = UNSET,
 ) -> Experiment | ServiceError:
+    experiment = await experiments.fetch_one(ctx, experiment_id)
+    if experiment is None:
+        return ServiceError.EXPERIMENTS_NOT_FOUND
+
+    # variant & variant allocations must match
+    if [variants, variant_allocation].count(UNSET) == 1:
+        return ServiceError.EXPERIMENTS_VARIANT_MISMATCH
+    if is_set(variants) and is_set(variant_allocation):
+        if len(variants) != len(variant_allocation):
+            return ServiceError.EXPERIMENTS_VARIANT_MISMATCH
+        if set(variants) != set(variant_allocation):
+            return ServiceError.EXPERIMENTS_VARIANT_MISMATCH
+        if not sum(variant_allocation.values()) == 100.0:
+            return ServiceError.EXPERIMENTS_INVALID_VARIANT_ALLOCATION
+
+    # if status is being updated, validate we're good to update to the new status
+    if is_set(status):
+        if status is ExperimentStatus.RUNNING:
+            if not (experiment.hypothesis or (is_set(hypothesis) and hypothesis)):
+                return ServiceError.EXPERIMENTS_NEEDS_HYPOTHESIS
+
+            if not (
+                experiment.exposure_event or (is_set(exposure_event) and exposure_event)
+            ):
+                return ServiceError.EXPERIMENTS_NEEDS_EXPOSURE_EVENT
+
+            if not (experiment.variants or (is_set(variants) and variants)):
+                return ServiceError.EXPERIMENTS_NEEDS_VARIANTS
+
+            if not (
+                experiment.variant_allocation
+                or (is_set(variant_allocation) and variant_allocation),
+            ):
+                return ServiceError.EXPERIMENTS_NEEDS_VARIANT_ALLOCATION
+
+            if not (
+                experiment.bucketing_salt or (is_set(bucketing_salt) and bucketing_salt)
+            ):
+                return ServiceError.EXPERIMENTS_NEEDS_BUCKETING_SALT
+
+        elif status is ExperimentStatus.COMPLETED:
+            if experiment.status is ExperimentStatus.RUNNING:
+                return ServiceError.EXPERIMENTS_INVALID_TRANSITION
+
     try:
         experiment = await experiments.partial_update(
             ctx,
@@ -97,10 +142,10 @@ async def partial_update(
                 "status": status,
             },
         )
-        return ServiceError.FAILED_TO_UPDATE_EXPERIMENT
+        return ServiceError.EXPERIMENTS_UPDATE_FAILED
 
     if experiment is None:
-        return ServiceError.EXPERIMENT_NOT_FOUND
+        return ServiceError.EXPERIMENTS_NOT_FOUND
 
     return experiment
 
@@ -130,7 +175,7 @@ async def track_exposure(
                 "variant_name": variant_name,
             },
         )
-        return ServiceError.FAILED_TO_TRACK_EXPOSURE
+        return ServiceError.EXPOSURES_TRACK_FAILED
 
     return exposure
 
@@ -141,7 +186,7 @@ async def fetch_and_assign_eligible_experiments(
 ) -> list[ContextualExperiment] | ServiceError:
     transaction = await ctx.database.transaction()
     try:
-        _experiments = await experiments.fetch_experiments(
+        _experiments = await experiments.fetch_many(
             ctx, status=ExperimentStatus.RUNNING
         )
 
@@ -173,7 +218,7 @@ async def fetch_and_assign_eligible_experiments(
             exc_info=exc,
             extra={"user_id": user_id},
         )
-        return ServiceError.FAILED_TO_FETCH_EXPERIMENTS
+        return ServiceError.EXPERIMENTS_FETCH_FAILED
     else:
         await transaction.commit()
 

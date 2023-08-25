@@ -20,14 +20,38 @@ router = APIRouter()
 
 def determine_status_code(error: ServiceError) -> int:
     """Determine the appropriate http status code for a given error."""
-    if error == ServiceError.FAILED_TO_CREATE_EXPERIMENT:
+    if error is ServiceError.EXPERIMENTS_CREATE_FAILED:
         return status.HTTP_500_INTERNAL_SERVER_ERROR
-    elif error == ServiceError.EXPERIMENT_KEY_ALREADY_EXISTS:
-        return status.HTTP_409_CONFLICT
-    elif error == ServiceError.EXPOSURE_ALREADY_EXISTS:
-        return status.HTTP_409_CONFLICT
-    else:
+    if error is ServiceError.EXPERIMENTS_FETCH_FAILED:
         return status.HTTP_500_INTERNAL_SERVER_ERROR
+    if error is ServiceError.EXPERIMENTS_NOT_FOUND:
+        return status.HTTP_404_NOT_FOUND
+    if error is ServiceError.EXPERIMENTS_UPDATE_FAILED:
+        return status.HTTP_500_INTERNAL_SERVER_ERROR
+    if error is ServiceError.EXPERIMENTS_DELETE_FAILED:
+        return status.HTTP_500_INTERNAL_SERVER_ERROR
+    if error is ServiceError.EXPERIMENTS_NEEDS_HYPOTHESIS:
+        return status.HTTP_400_BAD_REQUEST
+    if error is ServiceError.EXPERIMENTS_NEEDS_EXPOSURE_EVENT:
+        return status.HTTP_400_BAD_REQUEST
+    if error is ServiceError.EXPERIMENTS_NEEDS_VARIANTS:
+        return status.HTTP_400_BAD_REQUEST
+    if error is ServiceError.EXPERIMENTS_NEEDS_VARIANT_ALLOCATION:
+        return status.HTTP_400_BAD_REQUEST
+    if error is ServiceError.EXPERIMENTS_NEEDS_BUCKETING_SALT:
+        return status.HTTP_400_BAD_REQUEST
+    if error is ServiceError.EXPERIMENTS_KEY_ALREADY_EXISTS:
+        return status.HTTP_409_CONFLICT
+    if error is ServiceError.EXPERIMENTS_VARIANT_MISMATCH:
+        return status.HTTP_400_BAD_REQUEST
+    if error is ServiceError.EXPERIMENTS_INVALID_VARIANT_ALLOCATION:
+        return status.HTTP_400_BAD_REQUEST
+    if error is ServiceError.EXPERIMENTS_INVALID_TRANSITION:
+        return status.HTTP_400_BAD_REQUEST
+    if error is ServiceError.EXPOSURES_TRACK_FAILED:
+        return status.HTTP_500_INTERNAL_SERVER_ERROR
+    if error is ServiceError.EXPOSURE_ALREADY_EXISTS:
+        return status.HTTP_409_CONFLICT
 
 
 # Called by internal users

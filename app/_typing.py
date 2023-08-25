@@ -1,6 +1,6 @@
 from typing import Any
+from typing import TypeGuard
 from typing import TypeVar
-
 
 T = TypeVar("T")
 
@@ -20,3 +20,7 @@ class Unset:
 
 
 UNSET = Unset()
+
+
+def is_set(value: T | Unset) -> TypeGuard[T]:
+    return not isinstance(value, Unset)

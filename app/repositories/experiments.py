@@ -101,7 +101,21 @@ async def create(
     return Experiment.model_validate(deserialize(rec))
 
 
-async def fetch_experiments(
+async def fetch_one(
+    ctx: AbstractContext,
+    experiment_id: UUID,
+) -> Experiment | None:
+    query = f"""\
+        SELECT {READ_PARAMS}
+        FROM experiments
+        WHERE experiment_id = :experiment_id
+    """
+    values = {"experiment_id": str(experiment_id)}
+    rec = await ctx.database.fetch_one(query, values)
+    return deserialize(rec) if rec is not None else None
+
+
+async def fetch_many(
     ctx: AbstractContext,
     status: ExperimentStatus | None = None,
     page: int | None = None,
