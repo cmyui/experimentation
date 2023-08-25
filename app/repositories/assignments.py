@@ -58,6 +58,26 @@ async def create(
     return Assignment.model_validate(deserialize(rec))
 
 
+async def fetch_one(
+    ctx: AbstractContext,
+    experiment_id: UUID,
+    user_id: str,
+) -> Assignment | None:
+    rec = await ctx.database.fetch_one(
+        f"""\
+            SELECT {READ_PARAMS}
+              FROM assignments
+             WHERE experiment_id = :experiment_id
+               AND user_id = :user_id
+        """,
+        values={
+            "experiment_id": str(experiment_id),
+            "user_id": user_id,
+        },
+    )
+    return Assignment.model_validate(deserialize(rec)) if rec is not None else None
+
+
 async def fetch_many(
     ctx: AbstractContext,
     experiment_id: UUID | None = None,

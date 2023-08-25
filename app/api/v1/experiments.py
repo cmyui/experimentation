@@ -138,7 +138,6 @@ async def track_exposure(
         ctx,
         experiment_id,
         args.user_id,
-        args.variant_name,
     )
     if isinstance(data, ServiceError):
         return responses.failure(

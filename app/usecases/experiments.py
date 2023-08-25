@@ -159,14 +159,18 @@ async def track_exposure(
     ctx: AbstractContext,
     experiment_id: UUID,
     user_id: str,
-    variant_name: str,
 ) -> Exposure | ServiceError:
     try:
+        assignment = await assignments.fetch_one(ctx, experiment_id, user_id)
+        if assignment is None:
+            # (this could also be experiment doesn't exist)
+            return ServiceError.ASSIGNMENTS_NOT_FOUND
+
         exposure = await exposures.create(
             ctx,
             experiment_id=experiment_id,
             user_id=user_id,
-            variant_name=variant_name,
+            variant_name=assignment.variant_name,
         )
     except asyncpg.exceptions.UniqueViolationError as exc:
         return ServiceError.EXPOSURE_ALREADY_EXISTS
@@ -177,7 +181,6 @@ async def track_exposure(
             extra={
                 "experiment_id": experiment_id,
                 "user_id": user_id,
-                "variant_name": variant_name,
             },
         )
         return ServiceError.EXPOSURES_TRACK_FAILED

@@ -12,5 +12,5 @@ class Exposure(BaseModel):
 
 
 class ExposureInput(BaseModel):
-    user_id: str  # TODO: some sort of auth like a generated cookie?
-    variant_name: str
+    # TODO: Add some form of "authentication"
+    user_id: str

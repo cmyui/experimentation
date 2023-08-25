@@ -24,3 +24,5 @@ class ServiceError(Enum):
 
     EXPOSURES_TRACK_FAILED = "exposures.track_failed"
     EXPOSURE_ALREADY_EXISTS = "exposures.already_exists"
+
+    ASSIGNMENTS_NOT_FOUND = "assignments.not_found"
