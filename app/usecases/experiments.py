@@ -87,7 +87,7 @@ async def partial_update(
     # if status is being updated, validate we're good to update to the new status
     if is_set(status):
         if status is ExperimentStatus.RUNNING:
-            # TODO: this is not quite right
+            # TODO: move some of this to pydantic validators
             if not (experiment.hypothesis or (is_set(hypothesis) and hypothesis)):
                 return ServiceError.EXPERIMENTS_NEEDS_HYPOTHESIS
 
