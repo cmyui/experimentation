@@ -21,6 +21,5 @@ class ServiceError(Enum):
 
     EXPERIMENTS_INVALID_TRANSITION = "experiments.invalid_transition"
 
-    # EXPERIMENTS_INVALID_UPDATE = "experiments.invalid_update"
     EXPOSURES_TRACK_FAILED = "exposures.track_failed"
     EXPOSURE_ALREADY_EXISTS = "exposures.already_exists"
