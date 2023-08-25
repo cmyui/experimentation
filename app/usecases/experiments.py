@@ -9,11 +9,11 @@ from app._typing import UNSET
 from app._typing import Unset
 from app.context import AbstractContext
 from app.errors import ServiceError
-from app.models.experiments import ContextualExperiment
 from app.models.experiments import Experiment
 from app.models.experiments import ExperimentStatus
 from app.models.experiments import ExperimentType
 from app.models.experiments import Hypothesis
+from app.models.experiments import UserExperimentBucketing
 from app.models.experiments import Variant
 from app.models.exposures import Exposure
 from app.repositories import assignments
@@ -75,14 +75,19 @@ async def partial_update(
     if is_set(variants) and is_set(variant_allocation):
         if len(variants) != len(variant_allocation):
             return ServiceError.EXPERIMENTS_VARIANT_MISMATCH
-        if set(variants) != set(variant_allocation):
+        if set(v.name for v in variants) != set(variant_allocation):
             return ServiceError.EXPERIMENTS_VARIANT_MISMATCH
         if not sum(variant_allocation.values()) == 100.0:
             return ServiceError.EXPERIMENTS_INVALID_VARIANT_ALLOCATION
+        if any(allocation < 0 for allocation in variant_allocation.values()):
+            return ServiceError.EXPERIMENTS_INVALID_VARIANT_ALLOCATION
+
+        # TODO: should we enforce len(variants) != 1?
 
     # if status is being updated, validate we're good to update to the new status
     if is_set(status):
         if status is ExperimentStatus.RUNNING:
+            # TODO: this is not quite right
             if not (experiment.hypothesis or (is_set(hypothesis) and hypothesis)):
                 return ServiceError.EXPERIMENTS_NEEDS_HYPOTHESIS
 
@@ -106,7 +111,7 @@ async def partial_update(
                 return ServiceError.EXPERIMENTS_NEEDS_BUCKETING_SALT
 
         elif status is ExperimentStatus.COMPLETED:
-            if experiment.status is ExperimentStatus.RUNNING:
+            if experiment.status is not ExperimentStatus.RUNNING:
                 return ServiceError.EXPERIMENTS_INVALID_TRANSITION
 
     try:
@@ -183,7 +188,7 @@ async def track_exposure(
 async def fetch_and_assign_eligible_experiments(
     ctx: AbstractContext,
     user_id: str,
-) -> list[ContextualExperiment] | ServiceError:
+) -> list[UserExperimentBucketing] | ServiceError:
     transaction = await ctx.database.transaction()
     try:
         _experiments = await experiments.fetch_many(
@@ -192,21 +197,33 @@ async def fetch_and_assign_eligible_experiments(
 
         # TODO: filter out experiments that the user is not qualified for
         #       based on the user segments assigned to the experiment.
-        user_experiments: list[ContextualExperiment] = []
+        user_experiments: list[UserExperimentBucketing] = []
 
-        # Assign the user to a variant for each experiment.
+        # Fetch existing experiment assignments
+        user_assignments = {
+            assign.experiment_id: assign.variant_name
+            for assign in await assignments.fetch_many(ctx, user_id=user_id)
+        }
+
+        # Fetch the user's assignments to each experiment
         for experiment in _experiments:
-            variant_name = distribution.get_user_variant(experiment, user_id)
-            await assignments.create(
-                ctx,
-                experiment.experiment_id,
-                user_id,
-                variant_name,
-            )
+            variant_name = user_assignments.get(experiment.experiment_id)
+
+            if variant_name is None:
+                # User has not been assigned to a variant for this experiment.
+                # Assign the user to a variant & persist to the db
+                variant_name = distribution.get_user_variant(experiment, user_id)
+
+                await assignments.create(
+                    ctx,
+                    experiment.experiment_id,
+                    user_id,
+                    variant_name,
+                )
 
             user_experiments.append(
-                ContextualExperiment(
-                    experiment=experiment,
+                UserExperimentBucketing(
+                    experiment_name=experiment.name,
                     variant_name=variant_name,
                 )
             )

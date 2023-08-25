@@ -28,22 +28,22 @@ CREATE TABLE exposures (
     rec_id SERIAL PRIMARY KEY,
     experiment_id TEXT NOT NULL,
     user_id TEXT NOT NULL,
-    variant TEXT NOT NULL,
+    variant_name TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 CREATE UNIQUE INDEX exposures_experiment_id_user_id_idx ON exposures (experiment_id, user_id);
 CREATE INDEX exposures_experiment_id_idx ON exposures (experiment_id);
 CREATE INDEX exposures_user_id_idx ON exposures (user_id);
-CREATE INDEX exposures_variant_idx ON exposures (variant);
+CREATE INDEX exposures_variant_name_idx ON exposures (variant_name);
 
 CREATE TABLE assignments (
     rec_id SERIAL PRIMARY KEY,
     experiment_id TEXT NOT NULL,
     user_id TEXT NOT NULL,
-    variant TEXT NOT NULL,
+    variant_name TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 CREATE UNIQUE INDEX assignments_experiment_id_user_id_idx ON assignments (experiment_id, user_id);
 CREATE INDEX assignments_experiment_id_idx ON assignments (experiment_id);
 CREATE INDEX assignments_user_id_idx ON assignments (user_id);
-CREATE INDEX assignments_variant_idx ON assignments (variant);
+CREATE INDEX assignments_variant_name_idx ON assignments (variant_name);

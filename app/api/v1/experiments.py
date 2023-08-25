@@ -9,10 +9,11 @@ from app.api.v1 import responses
 from app.api.v1.responses import Success
 from app.context import HTTPAPIRequestContext
 from app.errors import ServiceError
-from app.models.experiments import ContextualExperiment
+from app.models import get_all_set_fields
 from app.models.experiments import Experiment
 from app.models.experiments import ExperimentInput
 from app.models.experiments import ExperimentUpdate
+from app.models.experiments import UserExperimentBucketing
 from app.models.exposures import Exposure
 from app.usecases import experiments
 
@@ -94,7 +95,7 @@ async def create_experiment(
 async def fetch_and_assign_eligible_experiments(
     user_id: str,
     ctx: HTTPAPIRequestContext = Depends(),
-) -> Success[list[ContextualExperiment]]:
+) -> Success[list[UserExperimentBucketing]]:
     data = await experiments.fetch_and_assign_eligible_experiments(ctx, user_id)
     if isinstance(data, ServiceError):
         return responses.failure(
@@ -115,7 +116,7 @@ async def partial_update_experiment(
     data = await experiments.partial_update(
         ctx,
         experiment_id,
-        **args.model_dump(exclude_unset=True),
+        **get_all_set_fields(args),
     )
     if isinstance(data, ServiceError):
         return responses.failure(

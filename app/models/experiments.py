@@ -119,6 +119,6 @@ class ExperimentUpdate(BaseModel):
     status: ExperimentStatus | None = None
 
 
-class ContextualExperiment(BaseModel):
-    experiment: Experiment
+class UserExperimentBucketing(BaseModel):
+    experiment_name: str
     variant_name: str

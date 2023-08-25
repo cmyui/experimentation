@@ -15,7 +15,9 @@ class ServiceError(Enum):
     EXPERIMENTS_NEEDS_BUCKETING_SALT = "experiments.needs_bucketing_salt"
 
     EXPERIMENTS_KEY_ALREADY_EXISTS = "experiments.key_already_exists"
-    EXPERIMENTS_VARIANT_MISMATCH = "experiments.variant_mismatch"
+    EXPERIMENTS_VARIANT_MISMATCH = (
+        "experiments.variant_mismatch"  # TODO: i think this can be made clearer
+    )
     EXPERIMENTS_INVALID_VARIANT_ALLOCATION = "experiments.invalid_variant_allocation"
 
     EXPERIMENTS_INVALID_TRANSITION = "experiments.invalid_transition"
