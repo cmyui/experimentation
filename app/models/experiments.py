@@ -11,6 +11,12 @@ class ExperimentType(Enum):
     DO_NO_HARM = "do_no_harm"
 
 
+class ExperimentStatus(str, Enum):
+    DRAFT = "draft"
+    RUNNING = "running"
+    COMPLETED = "completed"
+
+
 class Direction(Enum):
     INCREASE = "increase"
     DECREASE = "decrease"
@@ -89,5 +95,30 @@ class Experiment(BaseModel):
     variant_allocation: dict[str, float]  # %
     # user_segments: list[Segment]
     bucketing_salt: str
+    status: ExperimentStatus
     created_at: datetime
     updated_at: datetime
+
+
+class ExperimentInput(BaseModel):
+    experiment_name: str
+    experiment_type: ExperimentType
+    experiment_key: str
+
+
+class ExperimentUpdate(BaseModel):
+    experiment_name: str | None = None
+    experiment_key: str | None = None
+    experiment_type: ExperimentType | None = None
+    description: str | None = None
+    hypothesis: Hypothesis | None = None
+    exposure_event: str | None = None
+    variants: list[Variant] | None = None
+    variant_allocation: dict[str, float] | None = None
+    bucketing_salt: str | None = None
+    status: ExperimentStatus | None = None
+
+
+class ContextualExperiment(BaseModel):
+    experiment: Experiment
+    variant_name: str

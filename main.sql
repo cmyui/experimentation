@@ -16,6 +16,7 @@ CREATE TABLE experiments (
     -- evaluation_mode TEXT NOT NULL,
     -- mutual_exclusion_groups JSONB NOT NULL,
     -- holdout_groups JSONB NOT NULL,
+    status TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -34,3 +35,15 @@ CREATE UNIQUE INDEX exposures_experiment_id_user_id_idx ON exposures (experiment
 CREATE INDEX exposures_experiment_id_idx ON exposures (experiment_id);
 CREATE INDEX exposures_user_id_idx ON exposures (user_id);
 CREATE INDEX exposures_variant_idx ON exposures (variant);
+
+CREATE TABLE assignments (
+    rec_id SERIAL PRIMARY KEY,
+    experiment_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    variant TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX assignments_experiment_id_user_id_idx ON assignments (experiment_id, user_id);
+CREATE INDEX assignments_experiment_id_idx ON assignments (experiment_id);
+CREATE INDEX assignments_user_id_idx ON assignments (user_id);
+CREATE INDEX assignments_variant_idx ON assignments (variant);

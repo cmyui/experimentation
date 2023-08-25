@@ -8,9 +8,10 @@ from app.api.v1 import responses
 from app.api.v1.responses import Success
 from app.context import HTTPAPIRequestContext
 from app.errors import ServiceError
-from app.models import BaseModel
+from app.models.experiments import ContextualExperiment
 from app.models.experiments import Experiment
-from app.models.experiments import ExperimentType
+from app.models.experiments import ExperimentInput
+from app.models.experiments import ExperimentUpdate
 from app.models.exposures import Exposure
 from app.usecases import experiments
 
@@ -29,22 +30,19 @@ def determine_status_code(error: ServiceError) -> int:
         return status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
-class ExperimentInput(BaseModel):
-    name: str
-    type: ExperimentType
-    key: str
+# Called by internal users
 
 
 @router.post("/v1/experiments")
 async def create_experiment(
-    input_data: ExperimentInput,
+    args: ExperimentInput,
     ctx: HTTPAPIRequestContext = Depends(),
 ) -> Success[Experiment]:
     data = await experiments.create(
         ctx,
-        input_data.name,
-        input_data.type,
-        input_data.key,
+        args.experiment_name,
+        args.experiment_type,
+        args.experiment_key,
     )
     if isinstance(data, ServiceError):
         return responses.failure(
@@ -55,14 +53,15 @@ async def create_experiment(
     return responses.success(data.model_dump(mode="json"))
 
 
+# Called by end users
+
+
 @router.get("/v1/experiments")
-async def fetch_many_experiments(
+async def fetch_and_assign_eligible_experiments(
     user_id: str,
-    page: int,
-    page_size: int,
     ctx: HTTPAPIRequestContext = Depends(),
-) -> Success[list[Experiment]]:
-    data = await experiments.fetch_many_qualified(ctx, user_id, page, page_size)
+) -> Success[list[ContextualExperiment]]:
+    data = await experiments.fetch_and_assign_eligible_experiments(ctx, user_id)
     if isinstance(data, ServiceError):
         return responses.failure(
             error=data,
@@ -73,10 +72,30 @@ async def fetch_many_experiments(
     return responses.success([d.model_dump(mode="json") for d in data])
 
 
+@router.patch("/v1/experiments/{experiment_id}")
+async def partial_update_experiment(
+    experiment_id: UUID,
+    args: ExperimentUpdate,
+    ctx: HTTPAPIRequestContext = Depends(),
+) -> Success[Experiment]:
+    data = await experiments.partial_update(
+        ctx,
+        experiment_id,
+        **args.model_dump(exclude_unset=True),
+    )
+    if isinstance(data, ServiceError):
+        return responses.failure(
+            error=data,
+            message="Failed to update resource",
+            status=determine_status_code(data),
+        )
+    return responses.success(data.model_dump(mode="json"))
+
+
 @router.post("/v1/experiment-exposures")
 async def track_exposure(
     experiment_id: UUID,
-    user_id: str,  # TODO: should we determine this from a cookie/header?
+    user_id: str,  # TODO: some sort of implicit auth like a generated cookie?
     variant_name: str,
     ctx: HTTPAPIRequestContext = Depends(),
 ) -> Success[Exposure]:

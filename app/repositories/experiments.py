@@ -2,18 +2,23 @@ import json
 import secrets
 from datetime import datetime
 from typing import Any
+from uuid import UUID
 from uuid import uuid4
 
 from databases.interfaces import Record
 
+from app._typing import UNSET
+from app._typing import Unset
 from app.context import AbstractContext
 from app.models.experiments import Experiment
+from app.models.experiments import ExperimentStatus
 from app.models.experiments import ExperimentType
 from app.models.experiments import Hypothesis
+from app.models.experiments import Variant
 
 READ_PARAMS = """\
     experiment_id, name, key, type, description, hypothesis, exposure_event,
-    variants, variant_allocation, bucketing_salt, created_at, updated_at
+    variants, variant_allocation, bucketing_salt, status, created_at, updated_at
 """
 
 
@@ -31,6 +36,7 @@ def serialize(experiment: Experiment) -> dict[str, Any]:
         ),
         "variant_allocation": json.dumps(experiment.variant_allocation),
         "bucketing_salt": experiment.bucketing_salt,
+        "status": experiment.status.value,
         "created_at": experiment.created_at,
         "updated_at": experiment.updated_at,
     }
@@ -49,6 +55,7 @@ def deserialize(data: Record) -> Experiment:
             "variants": json.loads(data["variants"]),
             "variant_allocation": json.loads(data["variant_allocation"]),
             "bucketing_salt": data["bucketing_salt"],
+            "status": ExperimentStatus(data["status"]),
             "created_at": data["created_at"],
             "updated_at": data["updated_at"],
         }
@@ -72,6 +79,7 @@ async def create(
         variants=[],
         variant_allocation={},
         bucketing_salt=secrets.token_hex(4),
+        status=ExperimentStatus.DRAFT,
         created_at=datetime.now(),
         updated_at=datetime.now(),
     )
@@ -80,11 +88,11 @@ async def create(
         INSERT INTO experiments (experiment_id, name, key, type, description,
                                  hypothesis, exposure_event, variants,
                                  variant_allocation, bucketing_salt,
-                                 created_at, updated_at)
+                                 status, created_at, updated_at)
              VALUES (:experiment_id, :name, :key, :type, :description,
                      :hypothesis, :exposure_event, :variants,
                      :variant_allocation, :bucketing_salt,
-                     :created_at, :updated_at)
+                     :status, :created_at, :updated_at)
           RETURNING {READ_PARAMS}
         """,
         values=serialize(experiment),
@@ -93,22 +101,84 @@ async def create(
     return Experiment.model_validate(deserialize(rec))
 
 
-async def fetch_many(
+async def fetch_experiments(
     ctx: AbstractContext,
-    page: int,
-    page_size: int,
+    status: ExperimentStatus | None = None,
+    page: int | None = None,
+    page_size: int | None = None,
 ) -> list[Experiment]:
-    recs = await ctx.database.fetch_all(
-        query=f"""\
+    query = f"""\
         SELECT {READ_PARAMS}
           FROM experiments
-         ORDER BY rec_id DESC
-         LIMIT :limit
-        OFFSET :offset
-        """,
-        values={
-            "limit": page_size,
-            "offset": (page - 1) * page_size,
-        },
-    )
+    """
+    values = {}
+
+    if status is not None:
+        query += """\
+            WHERE status = :status
+            """
+        values["status"] = status.value
+
+    if page is not None and page_size is not None:
+        query += """\
+            LIMIT :page_size
+           OFFSET :offset
+        """
+        values["page_size"] = page_size
+        values["offset"] = page * page_size
+
+    query += """\
+        ORDER BY rec_id DESC
+    """
+
+    recs = await ctx.database.fetch_all(query, values)
     return [deserialize(rec) for rec in recs]
+
+
+async def partial_update(
+    ctx: AbstractContext,
+    experiment_id: UUID,
+    experiment_name: str | Unset = UNSET,
+    experiment_key: str | Unset = UNSET,
+    experiment_type: ExperimentType | Unset = UNSET,
+    description: str | Unset = UNSET,
+    hypothesis: Hypothesis | Unset = UNSET,
+    exposure_event: str | Unset = UNSET,
+    variants: list[Variant] | Unset = UNSET,
+    variant_allocation: dict[str, float] | Unset = UNSET,
+    bucketing_salt: str | Unset = UNSET,
+    status: ExperimentStatus | Unset = UNSET,
+) -> Experiment | None:
+    fields: dict[str, Any] = {}
+    if not isinstance(experiment_name, Unset):
+        fields["name"] = experiment_name
+    if not isinstance(experiment_key, Unset):
+        fields["key"] = experiment_key
+    if not isinstance(experiment_type, Unset):
+        fields["type"] = experiment_type.value
+    if not isinstance(description, Unset):
+        fields["description"] = description
+    if not isinstance(hypothesis, Unset):
+        fields["hypothesis"] = json.dumps(hypothesis.model_dump(mode="json"))
+    if not isinstance(exposure_event, Unset):
+        fields["exposure_event"] = exposure_event
+    if not isinstance(variants, Unset):
+        fields["variants"] = json.dumps([v.model_dump(mode="json") for v in variants])
+    if not isinstance(variant_allocation, Unset):
+        fields["variant_allocation"] = json.dumps(variant_allocation)
+    if not isinstance(bucketing_salt, Unset):
+        fields["bucketing_salt"] = bucketing_salt
+    if not isinstance(status, Unset):
+        fields["status"] = status.value
+
+    fields["updated_at"] = datetime.now()
+
+    query = f"""\
+        UPDATE experiments
+           SET {', '.join(f"{k} = :{k}" for k in fields)}
+         WHERE experiment_id = :experiment_id
+     RETURNING {READ_PARAMS}
+    """
+    values = {"experiment_id": str(experiment_id), **fields}
+    rec = await ctx.database.fetch_one(query, values)
+    return deserialize(rec) if rec is not None else None

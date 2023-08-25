@@ -87,6 +87,10 @@ if __name__ == "__main__":
 #                     description="The improved donation perks marketing",
 #                 ),
 #             ],
+#             variant_allocation={
+#                 "control": 75.0,
+#                 "treatment": 25.0,
+#             },
 #             user_segments=[Segment(name="all_users", filters=[])],
 #         )
 
