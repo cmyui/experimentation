@@ -53,14 +53,6 @@ class EventSegmentationMetric(MetricBase):
     # property is only used for PROPERTY_ metric types
     property: str | None = None
 
-    def __post_init__(self):
-        if self.type not in (
-            MetricType.PROPERTY_SUM,
-            MetricType.PROPERTY_AVERAGE,
-        ):
-            if self.property is not None:
-                raise ValueError("property should not be provided for this metric type")
-
 
 class MetricEffect(BaseModel):
     metric: MetricBase

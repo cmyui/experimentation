@@ -18,7 +18,7 @@ from app.models.exposures import Exposure
 from app.models.exposures import ExposureInput
 from app.usecases import experiments
 
-router = APIRouter()
+router = APIRouter(tags=["Experimentation"])
 
 
 def determine_status_code(error: ServiceError) -> int:
