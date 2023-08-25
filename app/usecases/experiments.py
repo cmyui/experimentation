@@ -77,7 +77,7 @@ async def partial_update(
             return ServiceError.EXPERIMENTS_VARIANT_MISMATCH
         if set(v.name for v in variants) != set(variant_allocation):
             return ServiceError.EXPERIMENTS_VARIANT_MISMATCH
-        if not sum(variant_allocation.values()) == 100.0:
+        if not sum(variant_allocation.values()) == 1.0:
             return ServiceError.EXPERIMENTS_INVALID_VARIANT_ALLOCATION
         if any(allocation < 0 for allocation in variant_allocation.values()):
             return ServiceError.EXPERIMENTS_INVALID_VARIANT_ALLOCATION

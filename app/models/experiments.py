@@ -92,7 +92,7 @@ class Experiment(BaseModel):
     hypothesis: Hypothesis
     exposure_event: str | None
     variants: list[Variant]
-    variant_allocation: dict[str, float]  # %
+    variant_allocation: dict[str, float]  # 0.0 - 1.0
     # user_segments: list[Segment]
     bucketing_salt: str
     status: ExperimentStatus
