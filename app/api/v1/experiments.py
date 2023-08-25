@@ -15,6 +15,7 @@ from app.models.experiments import ExperimentInput
 from app.models.experiments import ExperimentUpdate
 from app.models.experiments import UserExperimentBucketing
 from app.models.exposures import Exposure
+from app.models.exposures import ExposureInput
 from app.usecases import experiments
 
 router = APIRouter()
@@ -127,14 +128,18 @@ async def partial_update_experiment(
     return responses.success(data.model_dump(mode="json"))
 
 
-@router.post("/v1/experiment-exposures")
+@router.post("/v1/experiments/{experiment_id}/exposures")
 async def track_exposure(
     experiment_id: UUID,
-    user_id: str,  # TODO: some sort of implicit auth like a generated cookie?
-    variant_name: str,
+    args: ExposureInput,
     ctx: HTTPAPIRequestContext = Depends(),
 ) -> Success[Exposure]:
-    data = await experiments.track_exposure(ctx, experiment_id, user_id, variant_name)
+    data = await experiments.track_exposure(
+        ctx,
+        experiment_id,
+        args.user_id,
+        args.variant_name,
+    )
     if isinstance(data, ServiceError):
         return responses.failure(
             error=data,

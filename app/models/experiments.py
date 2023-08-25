@@ -120,5 +120,5 @@ class ExperimentUpdate(BaseModel):
 
 
 class UserExperimentBucketing(BaseModel):
-    experiment_name: str
+    experiment_id: UUID
     variant_name: str

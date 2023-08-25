@@ -9,3 +9,8 @@ class Exposure(BaseModel):
     user_id: str
     variant_name: str
     created_at: datetime
+
+
+class ExposureInput(BaseModel):
+    user_id: str  # TODO: some sort of auth like a generated cookie?
+    variant_name: str

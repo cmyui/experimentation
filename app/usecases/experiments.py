@@ -223,7 +223,7 @@ async def fetch_and_assign_eligible_experiments(
 
             user_experiments.append(
                 UserExperimentBucketing(
-                    experiment_name=experiment.name,
+                    experiment_id=experiment.experiment_id,
                     variant_name=variant_name,
                 )
             )
