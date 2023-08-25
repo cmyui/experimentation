@@ -17,6 +17,7 @@ from app.models.experiments import UserExperimentBucketing
 from app.models.exposures import Exposure
 from app.models.exposures import ExposureInput
 from app.usecases import experiments
+from app.usecases import exposures
 
 router = APIRouter(tags=["Experimentation"])
 
@@ -134,7 +135,7 @@ async def track_exposure(
     args: ExposureInput,
     ctx: HTTPAPIRequestContext = Depends(),
 ) -> Success[Exposure]:
-    data = await experiments.track_exposure(
+    data = await exposures.track_exposure(
         ctx,
         experiment_id,
         args.user_id,
