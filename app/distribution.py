@@ -21,5 +21,4 @@ def get_user_variant(experiment: Experiment, user_id: str) -> str:
         if normalized_value < cumulative_weight:
             return bucket_name
 
-    print(bucket_weights)
     raise ValueError("Bucket weights do not sum to 1.0")

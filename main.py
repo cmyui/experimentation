@@ -78,12 +78,10 @@ if __name__ == "__main__":
 #             variants=[
 #                 Variant(
 #                     name="control",
-#                     allocation=75.0,
 #                     description="The existing donation perks marketing",
 #                 ),
 #                 Variant(
 #                     name="treatment",
-#                     allocation=25.0,
 #                     description="The improved donation perks marketing",
 #                 ),
 #             ],
