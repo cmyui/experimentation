@@ -53,22 +53,6 @@ def determine_status_code(error: ServiceError) -> int:
     if error is ServiceError.EXPOSURE_ALREADY_EXISTS:
         return status.HTTP_409_CONFLICT
 
-    EXPERIMENTS_NEEDS_HYPOTHESIS = "experiments.needs_hypothesis"
-    EXPERIMENTS_NEEDS_EXPOSURE_EVENT = "experiments.needs_exposure_event"
-    EXPERIMENTS_NEEDS_VARIANTS = "experiments.needs_variants"
-    EXPERIMENTS_NEEDS_VARIANT_ALLOCATION = "experiments.needs_variant_allocation"
-    EXPERIMENTS_NEEDS_BUCKETING_SALT = "experiments.needs_bucketing_salt"
-
-    EXPERIMENTS_KEY_ALREADY_EXISTS = "experiments.key_already_exists"
-    EXPERIMENTS_VARIANT_MISMATCH = "experiments.variant_mismatch"
-    EXPERIMENTS_INVALID_VARIANT_ALLOCATION = "experiments.invalid_variant_allocation"
-
-    EXPERIMENTS_INVALID_TRANSITION = "experiments.invalid_transition"
-
-    # EXPERIMENTS_INVALID_UPDATE = "experiments.invalid_update"
-    EXPOSURES_TRACK_FAILED = "exposures.track_failed"
-    EXPOSURE_ALREADY_EXISTS = "exposures.already_exists"
-
 
 # Called by internal users
 
