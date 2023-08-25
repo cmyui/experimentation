@@ -2,7 +2,6 @@ from enum import Enum
 
 
 class ServiceError(Enum):
-    # TODO: some standardization might be a good idea
     EXPERIMENTS_CREATE_FAILED = "experiments.create_failed"
     EXPERIMENTS_FETCH_FAILED = "experiments.fetch_failed"
     EXPERIMENTS_NOT_FOUND = "experiments.not_found"
